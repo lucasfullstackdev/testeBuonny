@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
+import { MatDrawer } from '@angular/material/sidenav';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +7,12 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'front-angular';
+  public links = [
+    { route: 'products', label: 'Produtos', icon: 'widgets' },
+    { route: 'clients', label: 'Clientes', icon: 'groups' }
+  ];
+  @ViewChild('drawer') drawer: MatDrawer;
+  public toggleDrawer(): void {
+    this.drawer.toggle();
+  }
 }

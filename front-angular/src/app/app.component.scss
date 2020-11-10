@@ -1,0 +1,13 @@
+mat-drawer-container {
+    height: 100vh;
+
+    mat-drawer {
+        min-width: 200px;
+    }
+}
+
+.router-link-active {
+    border-left: 5px solid var(--primary);
+    
+    &, mat-icon { color: var(--primary) };
+}
