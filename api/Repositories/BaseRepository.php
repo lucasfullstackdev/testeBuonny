@@ -6,8 +6,9 @@ use Illuminate\Support\Facades\Validator;
 
 abstract class BaseRepository
 {
-    private $finded;
     protected $updateRules;
+    private $finded;
+    private $validator;
 
     public function __construct()
     {
@@ -18,12 +19,22 @@ abstract class BaseRepository
 
     public final function all()
     {
-        return $this->model::get();
+        try {
+            $collection = $this->model::get();
+            return Response::success($collection, 'Registros encontrados');
+        } catch (\Throwable $th) {
+            return Response::error($th, $th->getMessage());
+        }
     }
 
     public final function find($id)
     {
-        $this->finded = $this->model::find($id);
+        try {
+            $this->finded = $this->model::findOrFail($id);
+            $this->finded = Response::success($this->finded, 'Registro encontrado');
+        } catch (\Throwable $th) {
+            $this->finded = Response::error($th, $th->getMessage());
+        }
         return $this;
     }
 
@@ -34,28 +45,42 @@ abstract class BaseRepository
 
     public final function delete()
     {
-        return $this->finded->delete();
+        if ($this->finded['code'] != 200) {
+            return $this->finded;
+        }
+
+        return $this->finded['data']->delete();
     }
 
     public final function create($collection)
     {
-        $validator = Validator::make($collection, $this->storeRules);
+        try {
+            if ($this->collectionIsInvalid($collection))
+                return Response::error($collection, $this->validator->errors());
 
-        if ($validator->fails()) {
-            return $validator->errors();
+            $created = $this->model::create($collection);
+            return Response::success($created, 'Registro salvo com sucesso!');
+        } catch (\Throwable $th) {
+            return Response::error($th, $th->getMessage());
         }
-
-        return $this->model::create($collection);
     }
 
     public final function update($collection)
     {
-        $validator = Validator::make($collection, $this->storeRules);
+        try {
+            if ($this->collectionIsInvalid($collection))
+                return Response::error($collection, $this->validator->errors());
 
-        if ($validator->fails()) {
-            return $validator->errors();
+            $this->finded['data']->update($collection);
+            return Response::success($collection, 'Registro salvo com sucesso!');
+        } catch (\Throwable $th) {
+            return Response::error($th, $th->getMessage());
         }
+    }
 
-        return $this->finded->update($collection);
+    private function collectionIsInvalid($collection)
+    {
+        $this->validator = Validator::make($collection, $this->storeRules);
+        return $this->validator->fails();
     }
 }
